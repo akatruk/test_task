@@ -1,0 +1,75 @@
+scope: {{cluster_name}}
+namespace: /db/
+name: {{ansible_hostname}}
+
+restapi:
+  listen: {{ansible_default_ipv4.address}}:8008
+  connect_address: {{ ansible_default_ipv4.address }}:8008
+
+etcd:
+  # hosts: {{cname1}}:2379, {{cname2}}:2379, {{cname3}}:2379
+  hosts: {{ hosts }}
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      use_pg_rewind: true
+      use_slots: true
+      parameters:
+        wal_level: replica
+        listen_addresses: '*'
+        shared_buffers: {{shared_buffers}}
+        work_mem: {{work_mem}}
+#        effective_cash_size: {{effective_cash_size}}
+        hot_standby: "on"
+        wal_keep_segments: 8
+        max_wal_senders: 5
+        max_connections: {{ patroni_pg_max_connections }}
+        max_replication_slots: 5
+        wal_log_hints: "on"
+        archive_timeout: 1800s
+
+  # some desired options for 'initdb'
+  initdb:  # Note: It needs to be a list (some options need values, others are switches)
+  - encoding: UTF8
+  - data-checksums
+  - locale: en_US.UTF8
+
+  pg_hba:
+  - host replication postgres {{ network_pg }} md5
+  - host all all 0.0.0.0/0 md5
+  
+  users:
+    admin:
+      password: {{password_postgres}}
+      options:
+        - createrole
+        - createdb
+
+postgresql:
+  listen: 0.0.0.0:{{ patroni_postgres_port }}
+  connect_address: {{ ansible_default_ipv4.address }}:{{ patroni_postgres_port }}
+{% if patroni_custom_conf is defined %}
+  custom_conf: {{ patroni_custom_conf }}
+{% endif %}
+  data_dir: /var/lib/pgsql/12/data/
+  bin_dir: /usr/pgsql-12/bin
+  pgpass: /tmp/pgpass0
+  authentication:
+    replication:
+      username: postgres
+      password: {{password_postgres}}
+    superuser:
+      username: postgres
+      password: {{password_postgres}}
+  parameters:
+    unix_socket_directories: '/run/postgresql/'
+tags:
+    nofailover: false
+    noloadbalance: false
+    clonefrom: false
+    nosync: false

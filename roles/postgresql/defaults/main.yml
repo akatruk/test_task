@@ -1,0 +1,4 @@
+---
+# defaults file for postgresql
+patroni_pg_path: /usr/pgsql-11/bin
+patroni_postgres_port: 5432

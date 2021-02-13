@@ -1,0 +1,16 @@
+---
+# tasks file for keepalived  
+- name: Install keepalived
+  yum: name=keepalived state=latest
+
+- name: put config
+  template: src=keepalived.conf.j2 dest=/etc/keepalived/keepalived.conf backup=yes
+
+- name: restart and enable
+  service: name=keepalived state=restarted enabled=yes
+
+- name: update patroni
+  shell: pip install patroni
+
+- name: Reboot the machine with all defaults using Ansible
+  reboot:

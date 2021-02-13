@@ -1,0 +1,100 @@
+---
+
+  - name: Install package with multiple repos enabled
+    yum:
+      name: epel-release
+      state: latest
+
+  - name: Add the user 'postgres'
+    user: name=postgres password={{ password_postgres }}
+        
+  - name: Download PosrgreSQL wget
+    yum: 
+      name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm 
+      state: present
+  
+  - name: Install PostgreSQL & python
+    yum: name={{ item }} state=latest
+    with_items:
+      - postgresql12
+      - postgresql12-server
+      - postgresql12-contrib
+      - git
+      - python-pip
+      - python-psycopg2
+      - gcc
+      - python
+      - python-devel
+
+  - name: checkout patroni
+    git: 
+      repo: https://github.com/zalando/patroni.git 
+      dest: /opt/patroni
+  
+  - name: create /etc/patroni
+    file: state=directory dest=/etc/patroni
+  
+  - name: put postgres.yml
+    template: src=postgres0.yml dest=/etc/patroni/postgres.yml backup=yes
+  
+  - name: pip update
+    command: pip install --upgrade pip
+
+  - name: curl
+    shell: curl https://bootstrap.pypa.io/2.7/get-pip.py --output get-pip.py
+
+  - name: curl
+    shell: python get-pip.py
+
+  - name: update pip
+    shell: pip install setuptools --upgrade
+  
+  - name: install python packages
+    pip: name={{ item }}
+    with_items:
+      - python-etcd
+      - python-consul
+      - boto
+      - mock
+      - kazoo
+      - click
+      - tzlocal
+      - prettytable
+      - PyYAML
+      - python-dateutil
+      - psutil
+      - patroni
+      - asn1crypto
+      - attrs
+      - Automat
+      - blinker
+      - colorama
+      - constantly
+      - cryptography
+      - zipp
+      - wcwidth
+      - psycopg2-binary
+      - py
+
+  # - name: cp patronictl
+  #   shell: cp /usr/bin/patronictl /usr/bin/
+
+  # - name: cp patronictl
+  #   shell: cp /usr/bin/patroni /usr/bin/
+
+  # - name: python3
+  #   shell: sudo ln -sf /usr/bin/python2.7 /usr/bin/python
+
+  - name: put patroni.service systemd unit
+    template: src=patroni.service dest=/etc/systemd/system/patroni.service backup=yes
+  
+  - name: Start etcd and Enable as service
+    service: name=etcd.service state=started enabled=yes
+  
+  - name: Reload daemon definitions
+    command: /usr/bin/systemctl daemon-reload
+  
+  - name: restart
+    service: name=patroni state=restarted enabled=yes
+  
+

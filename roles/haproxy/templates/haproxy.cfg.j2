@@ -1,0 +1,26 @@
+
+global
+maxconn 800
+
+defaults
+log global
+retries 2
+mode tcp
+timeout client 30m
+timeout connect 4s
+timeout server 30m
+timeout check 5s
+
+frontend ft_postgresql
+bind *:5000
+default_backend postgres-patroni
+
+backend postgres-patroni
+option httpchk OPTIONS /
+http-check expect status 200
+default-server inter 3s fall 3 rise 2
+server srv1 {{ip_address1}}:5432 check port 8008
+server srv2 {{ip_address2}}:5432 check port 8008
+server srv3 {{ip_address3}}:5432 check port 8008
+server srv4 {{ip_address4}}:5432 check port 8008
+server srv5 {{ip_address5}}:5432 check port 8008

@@ -1,0 +1,60 @@
+---
+# tasks file for etcd
+
+- name: Install firewalld
+  yum: 
+    name: firewalld
+    state: latest
+
+- name: enabled firewall
+  shell: systemctl enable firewalld
+
+- name: start firewall
+  shell: systemctl start firewalld
+
+- name: open firewall 2379, 2380, 5000, 2380, 5432
+  shell: firewall-cmd --permanent --add-port={{item}}/tcp --zone=public
+  with_items:
+   - 2379
+   - 2380
+   - 5000
+   - 2380
+   - 8008
+   - 5432
+
+- name: reload firewall
+  shell: firewall-cmd --reload
+  # shell: systemctl restart firewalld
+
+# - name: Disable SELinux
+#   selinux:
+#     state: disabled
+
+- name: Change the hostname
+  hostname:
+    name="{{ inventory_hostname }}"
+  when:
+    ansible_fqdn != ansible_ssh_host
+
+- name: put repo
+  template: 
+    src: myrepo.repo.j2 
+    dest: /etc/yum.repos.d/myrepo.repo
+    backup: yes
+
+- name: Install etcd
+  yum: 
+    name: etcd
+    state: latest
+
+- name: put custom config
+  template: 
+    src: etcd.conf.j2 
+    dest: /etc/etcd/etcd.conf 
+    backup: yes
+
+- name: Start etcd and Enable as service
+  service: 
+    name: etcd.service 
+    state: started 
+    enabled: yes

@@ -1,0 +1,6 @@
+[patroni3]
+srv1 ansible_ssh_host=13.36.38.1
+srv2 ansible_ssh_host=13.36.37.180
+srv3 ansible_ssh_host=35.180.230.171
+srv4 ansible_ssh_host=35.180.234.236
+srv5 ansible_ssh_host=13.36.39.30
